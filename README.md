@@ -1,2 +1,2 @@
 # fix-exif-date
-Fix EXIF date when timezone is incorrect
+Fix EXIF date when timezone is incorrect.
