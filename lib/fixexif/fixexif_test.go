@@ -2,6 +2,7 @@ package fixexif
 
 import (
 	"testing"
+	"time"
 
 	"github.com/denarced/fix-exif-date/shared"
 	ji "github.com/dsoprea/go-jpeg-image-structure/v2"
@@ -38,11 +39,13 @@ func TestConvertPrefixToMultiplier(t *testing.T) {
 
 func TestToZone(t *testing.T) {
 	shared.InitTestLogging(t)
-
-	// EXERCISE
-	date, offset := toZone("2023:11:05 17:42:51", "+03:00", "Europe/Helsinki")
-
 	req := require.New(t)
+
+	location, err := time.LoadLocation("Europe/Helsinki")
+	req.Nil(err, "LoadLocation err should be nil.")
+	// EXERCISE
+	date, offset := toZone("2023:11:05 17:42:51", "+03:00", location)
+
 	// VERIFY
 	req.Equal("2023:11:05 16:42:51", date)
 	req.Equal("+02:00", offset)

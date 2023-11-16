@@ -31,7 +31,7 @@ type Output interface {
 }
 
 // FixDate fixes JPG file in path.
-func FixDate(filepath string, timezone string, output Output) (err error) {
+func FixDate(filepath string, location *time.Location, output Output) (err error) {
 	output.PrintFile(filepath)
 	jmp := ji.NewJpegMediaParser()
 	intfc, err := jmp.ParseFile(filepath)
@@ -48,7 +48,7 @@ func FixDate(filepath string, timezone string, output Output) (err error) {
 		if err != nil {
 			return
 		}
-		targetDate, targetOffset := toZone(dateTimeString, offsetString, timezone)
+		targetDate, targetOffset := toZone(dateTimeString, offsetString, location)
 		if offsetString == targetOffset {
 			output.SkipFile()
 			shared.Logger.Info().Msg("Timezone offset is correct, nothing to do.")
@@ -189,9 +189,7 @@ func convertPrefixToMultiplier(prefix string) int {
 	}
 }
 
-func toZone(date, offset string, zone string) (string, string) {
-	location, err := time.LoadLocation(zone)
-	soPanic(err, "Failed to load location")
+func toZone(date, offset string, location *time.Location) (string, string) {
 	parsedDate, err := time.Parse("2006:01:02 15:04:05-07:00", date+offset)
 	soPanic(err, "Failed to parse time")
 	inLocation := parsedDate.In(location)

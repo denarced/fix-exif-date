@@ -5,19 +5,30 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
+	"github.com/alecthomas/kong"
 	"github.com/denarced/fix-exif-date/lib/fixexif"
 	"github.com/denarced/fix-exif-date/shared"
 )
 
-const timezone = "Europe/Helsinki"
+// CLI for this application.
+var CLI struct {
+	Timezone string   `help:"Override local timezone." default:"Local"`
+	Files    []string `arg:"" name:"file" help:"Photos to fix."`
+}
 
 func main() {
 	shared.InitLogging()
 	shared.Logger.Info().Msg(" ------ Start ----- ")
+	kong.Parse(&CLI)
+	location := parseTimezone(CLI.Timezone)
+	if location == nil {
+		os.Exit(2)
+	}
 	out := &cliOutput{first: true, indent: 4}
-	for _, each := range os.Args[1:] {
-		err := fixexif.FixDate(each, timezone, out)
+	for _, each := range CLI.Files {
+		err := fixexif.FixDate(each, location, out)
 		if err != nil {
 			shared.Logger.Error().
 				Str("filepath", each).
@@ -27,6 +38,16 @@ func main() {
 		}
 	}
 	shared.Logger.Info().Msg(" ----- Done ----- ")
+}
+
+func parseTimezone(timezone string) *time.Location {
+	location, err := time.LoadLocation(timezone)
+	if err != nil {
+		shared.Logger.Info().Err(err).Msg("Failed to load timezone.")
+		fmt.Fprintf(os.Stderr, "Invalid timezone location: %s\n", timezone)
+		return nil
+	}
+	return location
 }
 
 type cliOutput struct {
